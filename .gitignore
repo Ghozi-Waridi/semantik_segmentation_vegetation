@@ -237,3 +237,6 @@ __pycache__/
 # Compiled extensions
 *.c
 *.cpp.rej
+
+
+README.md

@@ -12,7 +12,7 @@ from pathlib import Path
 from core.utils.gpu_utils import to_cpu, to_gpu, is_gpu_available
 
 
-# Setup logging
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -38,7 +38,7 @@ def save_model(model, save_dir: str = 'models', model_name: str = 'vgg16_cbam'):
         str: Path to saved model directory
     """
     try:
-        # Create save directory if not exists
+        
         Path(save_dir).mkdir(parents=True, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -47,7 +47,7 @@ def save_model(model, save_dir: str = 'models', model_name: str = 'vgg16_cbam'):
         
         logger.info(f"Starting model save to {model_dir}")
         
-        # Save architecture metadata
+        
         metadata = {
             'input_shape': model.input_shape,
             'num_classes': model.num_classes,
@@ -60,7 +60,7 @@ def save_model(model, save_dir: str = 'models', model_name: str = 'vgg16_cbam'):
             json.dump(metadata, f, indent=2)
         logger.info(f"Saved metadata to {metadata_path}")
         
-        # Save weights from each layer
+        
         weights_dir = os.path.join(model_dir, 'weights')
         Path(weights_dir).mkdir(parents=True, exist_ok=True)
         
@@ -69,23 +69,23 @@ def save_model(model, save_dir: str = 'models', model_name: str = 'vgg16_cbam'):
             layer_name = layer.__class__.__name__
             layer_data = {'index': idx, 'type': layer_name}
             
-            # Save Conv2D weights
+            
             if hasattr(layer, 'weights') and layer.weights is not None:
                 weights_file = os.path.join(weights_dir, f'layer_{idx:03d}_weights.npy')
-                # Ensure CPU numpy array when saving
+                
                 np.save(weights_file, to_cpu(layer.weights))
                 layer_data['weights'] = f'layer_{idx:03d}_weights.npy'
                 logger.debug(f"Saved weights for layer {idx} ({layer_name}): {layer.weights.shape}")
             
-            # Save Conv2D bias
+            
             if hasattr(layer, 'bias') and layer.bias is not None:
                 bias_file = os.path.join(weights_dir, f'layer_{idx:03d}_bias.npy')
-                # Ensure CPU numpy array when saving
+                
                 np.save(bias_file, to_cpu(layer.bias))
                 layer_data['bias'] = f'layer_{idx:03d}_bias.npy'
                 logger.debug(f"Saved bias for layer {idx} ({layer_name}): {layer.bias.shape}")
             
-            # Save attention weights (CBAM)
+            
             if hasattr(layer, 'channel_attention'):
                 ca_weights1 = os.path.join(weights_dir, f'layer_{idx:03d}_ca_weights1.npy')
                 np.save(ca_weights1, to_cpu(layer.channel_attention.mlp_weights1))
@@ -104,7 +104,7 @@ def save_model(model, save_dir: str = 'models', model_name: str = 'vgg16_cbam'):
             
             layer_info.append(layer_data)
         
-        # Save layer architecture info
+        
         arch_path = os.path.join(model_dir, 'architecture.json')
         with open(arch_path, 'w') as f:
             json.dump(layer_info, f, indent=2)
@@ -132,7 +132,7 @@ def load_model(model, model_dir: str):
     try:
         logger.info(f"Starting model load from {model_dir}")
         
-        # Load and verify metadata
+        
         metadata_path = os.path.join(model_dir, 'metadata.json')
         with open(metadata_path, 'r') as f:
             metadata = json.load(f)
@@ -145,14 +145,14 @@ def load_model(model, model_dir: str):
             logger.warning(f"Layer count mismatch: saved={metadata['num_layers']}, "
                           f"current={len(model.layers)}")
         
-        # Load layer architecture
+        
         arch_path = os.path.join(model_dir, 'architecture.json')
         with open(arch_path, 'r') as f:
             layer_info = json.load(f)
         
         weights_dir = os.path.join(model_dir, 'weights')
         
-        # Load weights for each layer
+        
         for layer_data in layer_info:
             idx = layer_data['index']
             layer_type = layer_data['type']
@@ -163,22 +163,22 @@ def load_model(model, model_dir: str):
             
             layer = model.layers[idx]
             
-            # Load Conv2D weights
+            
             if 'weights' in layer_data and hasattr(layer, 'weights'):
                 weights_file = os.path.join(weights_dir, layer_data['weights'])
                 w = np.load(weights_file)
-                # Move to GPU if available
+                
                 layer.weights = to_gpu(w) if is_gpu_available() else w
                 logger.debug(f"Loaded weights for layer {idx} ({layer_type}): {layer.weights.shape}")
             
-            # Load Conv2D bias
+            
             if 'bias' in layer_data and hasattr(layer, 'bias'):
                 bias_file = os.path.join(weights_dir, layer_data['bias'])
                 b = np.load(bias_file)
                 layer.bias = to_gpu(b) if is_gpu_available() else b
                 logger.debug(f"Loaded bias for layer {idx} ({layer_type}): {layer.bias.shape}")
             
-            # Load attention weights
+            
             if 'ca_weights1' in layer_data and hasattr(layer, 'channel_attention'):
                 w1_file = os.path.join(weights_dir, layer_data['ca_weights1'])
                 w1 = np.load(w1_file)

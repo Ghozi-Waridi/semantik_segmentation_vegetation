@@ -44,7 +44,6 @@ class MaxPooling2D:
     def backward(self, dout, learning_rate: float):
         """Backward pass with GPU support"""
         xp_module = get_array_module(dout)
-        # Gradient must match input shape
         dx = xp_module.zeros_like(self.input)
         batch_size, out_h, out_w, channels = dout.shape
 

@@ -1,5 +1,5 @@
 from core.utils.gpu_utils import get_array_module, to_gpu, to_cpu, xp
-# import numpy as np
+
 from core.utils.logging_config import get_logger
 import logging
 
@@ -11,7 +11,7 @@ class Conv2D:
         self,
         out_channels: int,
         kernel_size,
-        strides: tuple[int, int] = (1, 1),  # Changed default from (2,2) to (1,1)
+        strides: tuple[int, int] = (1, 1),  
         padding: str = "same",
         activations: str = "relu",
     ) -> None:
@@ -21,11 +21,11 @@ class Conv2D:
         self.padding = padding
         self.activations = activations
 
-        ### Parameters
+        
         self.weights = None
         self.bias = None
 
-        ### Log For initialization
+        
 
         logger.info(f"Conv2D Layer Initialized:")
         logger.info(f"  - Output Channels: {self.out_channels}")
@@ -36,7 +36,7 @@ class Conv2D:
 
     def initialize(self, input_shape) -> None:
         self.input_shape = input_shape
-        input_channel = input_shape[-1]  # input_shape is already a tuple
+        input_channel = input_shape[-1]  
 
         std = float(xp.sqrt(2.0 / (input_channel * self.kernel_size[0] * self.kernel_size[1])))
         self.weights = (
@@ -50,7 +50,7 @@ class Conv2D:
         )
         self.bias = xp.zeros((1, 1, 1, self.out_channels))
 
-        # Log parameter initialization
+        
         logger.info(f"Parameters Initialized:")
         logger.info(f"  - Input Shape: {input_shape}")
         logger.info(f"  - Weights Shape: {self.weights.shape}")
@@ -82,12 +82,12 @@ class Conv2D:
         self.x = x
         batch_size, h, w, in_channels = x.shape
 
-        # # Log input information
-        # logging.info(f"Forward Pass Started:")
-        # logging.info(f"  - Input Shape: {x.shape}")
-        # logging.info(
-        #     f"  - Input Stats - Min: {np.min(x):.6f}, Max: {np.max(x):.6f}, Mean: {np.mean(x):.6f}"
-        # )
+        
+        
+        
+        
+        
+        
 
         if self.weights is None:
             self.initialize(x.shape)
@@ -107,7 +107,7 @@ class Conv2D:
 
         output = xp_module.zeros((batch_size, out_h, out_w, self.out_channels))
 
-        # Log convolution details
+        
         logging.info(f"Convolution Details:")
         logging.info(f"  - Original Size: {h}x{w}")
         logging.info(f"  - Padded Size: {x_padded.shape[1]}x{x_padded.shape[2]}")
@@ -123,21 +123,21 @@ class Conv2D:
 
                 x_slice = x_padded[:, h_start:h_end, w_start:w_end, :]
 
-                ### Analogi: Setiap batch akan memiliki memiliki informasi setiap citra.
+                
                 x_slice = x_slice.reshape(batch_size, -1)
-                ### Melakuann reshape untuk menyammakan dimensi dari x)slice
-                ### Anlogi: setiap kolom dari output channels akan memiliki bobot sendiri dari informasi citra.
+                
+                
                 weight_flat = self.weights.reshape(-1, self.out_channels)
 
                 output[:, i, j, :] = xp_module.dot(x_slice, weight_flat) + self.bias
         self.output = output.copy()
 
-        # Log output information
-        # logging.info(f"Forward Pass Completed:")
-        # logging.info(f"  - Output Shape: {output.shape}")
-        # logging.info(
-        #     f"  - Output Stats - Min: {np.min(output):.6f}, Max: {np.max(output):.6f}, Mean: {np.mean(output):.6f}"
-        # )
+        
+        
+        
+        
+        
+        
         return output
 
     def backward(self, dout, learning_rate: float = 0.001):
@@ -145,12 +145,12 @@ class Conv2D:
         xp_module = get_array_module(dout)
         batch_size, h, w, channels = self.input.shape
 
-        # Log backward pass start
-        # logging.info(f"Backward Pass Started:")
-        # logging.info(f"  - Gradient Input Shape: {dout.shape}")
-        # logging.info(
-        #     f"  - Gradient Stats - Min: {np.min(dout):.6f}, Max: {np.max(dout):.6f}, Mean: {np.mean(dout):.6f}"
-        # )
+        
+        
+        
+        
+        
+        
 
         if self.padding == "same":
             pad_h = (self.kernel_size[0] - 1) // 2
@@ -174,15 +174,15 @@ class Conv2D:
                 w_start = j * self.strides[1]
                 w_end = w_start + self.kernel_size[1]
 
-                # x_slice shape: (batch, kh, kw, in_c)
+                
                 x_slice = x_padded[:, h_start:h_end, w_start:w_end, :]
 
-                # Accumulate gradients for weights (kh,kw,in_c,out_c)
-                # dw += sum_b x_slice(b,kh,kw,in_c) * dout(b,out_c)
+                
+                
                 dw += xp_module.einsum("bhwc,bo->hwco", x_slice, dout[:, i, j, :])
 
-                # Accumulate gradients for input slice (batch, kh, kw, in_c)
-                # dx_slice += sum_o weights(kh,kw,in_c,out_c) * dout(b,out_c)
+                
+                
                 dx_padded[:, h_start:h_end, w_start:w_end, :] += xp_module.einsum(
                     "hwco,bo->bhwc", self.weights, dout[:, i, j, :]
                 )
@@ -192,7 +192,7 @@ class Conv2D:
         else:
             dx = dx_padded
 
-        # Log gradient statistics before update
+        
         logger.info(f"Gradient Statistics:")
         logger.info(
             f"  - dW Stats - Min: {float(xp_module.min(dw)):.6f}, Max: {float(xp_module.max(dw)):.6f}, Mean: {float(xp_module.mean(dw)):.6f}"

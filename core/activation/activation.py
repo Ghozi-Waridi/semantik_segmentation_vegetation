@@ -40,7 +40,7 @@ class ReLU:
         if self.input is None:
             raise ValueError("Must call forward before backward")
 
-        # Derivative ReLU: 1 jika input > 0, 0 jika input <= 0
+        
         dX = dout * (self.input > 0)
         return dX
 
@@ -67,8 +67,8 @@ class Sigmoid:
         xp_module = get_array_module(X)
         self.input = X.copy()
 
-        # Stabil numerically untuk menghindari overflow
-        X_clipped = xp_module.clip(X, -50, 50)  # Clip untuk menghindari overflow exponential
+        
+        X_clipped = xp_module.clip(X, -50, 50) 
         self.output = 1 / (1 + xp_module.exp(-X_clipped))
         return self.output
 
@@ -86,7 +86,7 @@ class Sigmoid:
         if self.input is None:
             raise ValueError("Must call forward before backward")
 
-        # Derivative Sigmoid: sigmoid(x) * (1 - sigmoid(x))
+        
         sigmoid_output = self.output
         dX = dout * sigmoid_output * (1 - sigmoid_output)
         return dX
@@ -130,7 +130,7 @@ class Tanh:
         if self.input is None:
             raise ValueError("Must call forward before backward")
 
-        # Derivative Tanh: 1 - tanh^2(x)
+        
         dX = dout * (1 - self.output**2)
         return dX
 
@@ -172,7 +172,7 @@ class LeakyReLU:
         if self.input is None:
             raise ValueError("Must call forward before backward")
 
-        # Derivative Leaky ReLU: 1 jika input > 0, alpha jika input <= 0
+        
         dX = dout * xp_module.where(self.input > 0, 1, self.alpha)
         return dX
 
@@ -199,7 +199,7 @@ class Softmax:
         xp_module = get_array_module(X)
         self.input = X.copy()
 
-        # Numerical stability: subtract max untuk menghindari overflow
+        
         exp_X = xp_module.exp(X - xp_module.max(X, axis=-1, keepdims=True))
         self.output = exp_X / xp_module.sum(exp_X, axis=-1, keepdims=True)
         return self.output
@@ -213,6 +213,6 @@ class Softmax:
             dout: Gradient dari layer berikutnya
             learning_rate: Not used, for API consistency
         """
-        # Untuk softmax + cross entropy, gradient = (pred - true)
-        # Jika digunakan standalone, perlu implementasi full derivative
+        
+        
         return dout
